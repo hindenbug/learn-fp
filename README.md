@@ -1,2 +1,2 @@
 # learn-fp
-# Learning FP with Haskell
+### Learning FP with Haskell
