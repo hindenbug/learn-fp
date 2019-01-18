@@ -17,24 +17,31 @@ defmodule Hangman.Game do
   end
 
   def make_move(game = %{game_state: state}, _guess) when state in [:won, :lost] do
-    {game, tally(game)}
+    game
   end
 
   def make_move(game, guess) do
-    game = accept_move(game, guess, MapSet.member?(game.used, guess))
-    {game, tally(game)}
+    accept_move(game, guess, MapSet.member?(game.used, guess))
   end
 
-  def accept_move(game, guess, _already_guessed = true) do
+  def tally(game) do
+    %{
+      game_state: game.game_state,
+      turns_left: game.turns_left,
+      letters: game.letters |> reveal_guessed(game.used)
+    }
+  end
+
+  defp accept_move(game, guess, _already_guessed = true) do
     Map.put(game, :game_state, :already_used)
   end
 
-  def accept_move(game, guess, _already_guessed) do
+  defp accept_move(game, guess, _already_guessed) do
     Map.put(game, :used, MapSet.put(game.used, guess))
     |> score(Enum.member?(game.letters, guess))
   end
 
-  def score(game, _correct_guess = true) do
+  defp score(game, _correct_guess = true) do
     new_state =
       MapSet.new(game.letters)
       |> MapSet.subset?(game.used)
@@ -43,18 +50,24 @@ defmodule Hangman.Game do
     Map.put(game, :game_state, new_state)
   end
 
-  def score(game = %{turns_left: 1}, _incorrect_guess) do
+  defp score(game = %{turns_left: 1}, _incorrect_guess) do
     %{game | game_state: :lost, turns_left: 0}
   end
 
-  def score(game = %{turns_left: turns_left}, _incorrect_guess) do
+  defp score(game = %{turns_left: turns_left}, _incorrect_guess) do
     %{game | game_state: :incorrect_guess, turns_left: turns_left - 1}
   end
 
-  def won?(true), do: :won
-  def won?(_), do: :correct_guess
+  defp won?(true), do: :won
+  defp won?(_), do: :correct_guess
 
-  def tally(_game) do
-    4 + 4
+  defp reveal_guessed(letters, used) do
+    letters
+    |> Enum.map(fn letter ->
+      reveal_letter(letter, MapSet.member?(used, letter))
+    end)
   end
+
+  defp reveal_letter(letter, _in_word = true), do: letter
+  defp reveal_letter(letter, _not_in_word), do: "_"
 end
