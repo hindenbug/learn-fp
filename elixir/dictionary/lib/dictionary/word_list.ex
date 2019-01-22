@@ -6,7 +6,7 @@ defmodule Dictionary.WordList do
   end
 
   def random_word() do
-    Agent.get(@mk, &Enum.random/1)
+    Agent.get(@me, &Enum.random/1)
   end
 
   def word_list do
